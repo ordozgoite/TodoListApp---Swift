@@ -8,12 +8,7 @@
 
 import Foundation
 
-class TodoItem {
-    let text: String
-    var isDone: Bool
-    
-    init(text: String) {
-        self.text = text
-        self.isDone = false
-    }
+class TodoItem: Codable {
+    var text: String = ""
+    var isDone: Bool = false
 }
