@@ -7,16 +7,18 @@
 //
 
 import UIKit
+import CoreData
 
 class TodoListViewController: UITableViewController {
     
     var todoItemsArray = [TodoItem]()
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+    
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        print(dataFilePath ?? "")
+        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
         loadItems()
         
@@ -60,8 +62,9 @@ class TodoListViewController: UITableViewController {
                 
                 print("\n\n\n===\(textField.text!)===\n\n\n")
                 
-                let newTodoItem = TodoItem()
+                let newTodoItem = TodoItem(context: self.context)
                 newTodoItem.text = textField.text!
+                newTodoItem.isDone = false
                 
                 self.todoItemsArray.append(newTodoItem)
                 
@@ -80,26 +83,23 @@ class TodoListViewController: UITableViewController {
     //MARK: - Model Manipulation Methods
     
     func saveItems() {
-        let encoder = PropertyListEncoder()
         
         do {
-            let data = try encoder.encode(todoItemsArray)
-            try data.write(to: dataFilePath!)
+            try context.save()
         } catch {
-            print("Error encoding item array, \(error)")
+            print("Error saving context, \(error)")
         }
 
-        tableView.reloadData()
+        self.tableView.reloadData()
     }
     
     func loadItems() {
-        if let data = try? Data(contentsOf: dataFilePath!) {
-            let decoder = PropertyListDecoder()
-            do {
-                todoItemsArray = try decoder.decode([TodoItem].self, from: data)
-            } catch {
-                print("Error decoding item array, \(error)")
-            }
+        let request: NSFetchRequest<TodoItem> = TodoItem.fetchRequest()
+        
+        do {
+            todoItemsArray = try context.fetch(request)
+        } catch {
+            print("Error fetching data from context, \(error)")
         }
     }
     
