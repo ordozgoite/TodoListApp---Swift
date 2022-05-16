@@ -18,8 +18,7 @@ class TodoListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
-        
+        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))        
         loadItems()
         
     }
@@ -44,6 +43,9 @@ class TodoListViewController: UITableViewController {
     //MARK: - Table View Delegate Methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
+//        context.delete(todoItemsArray[indexPath.row])
+//        todoItemsArray.remove(at: indexPath.row)
         
         todoItemsArray[indexPath.row].isDone = !todoItemsArray[indexPath.row].isDone
         
@@ -93,14 +95,45 @@ class TodoListViewController: UITableViewController {
         self.tableView.reloadData()
     }
     
-    func loadItems() {
-        let request: NSFetchRequest<TodoItem> = TodoItem.fetchRequest()
+    func loadItems(with request: NSFetchRequest<TodoItem> = TodoItem.fetchRequest()) {
         
         do {
             todoItemsArray = try context.fetch(request)
         } catch {
             print("Error fetching data from context, \(error)")
         }
+        
+        tableView.reloadData()
+    }
+}
+
+//MARK: - Search Bar Methods
+
+extension TodoListViewController: UISearchBarDelegate {
+    
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        
+        let request: NSFetchRequest<TodoItem> = TodoItem.fetchRequest()
+        
+        request.predicate = NSPredicate(format: "text CONTAINS[cd] %@", searchBar.text!)
+        
+        request.sortDescriptors = [NSSortDescriptor(key: "text", ascending: true)]
+        
+        loadItems(with: request)
     }
     
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0 {
+            loadItems()
+        } else {
+            let request: NSFetchRequest<TodoItem> = TodoItem.fetchRequest()
+            
+            request.predicate = NSPredicate(format: "text CONTAINS[cd] %@", searchBar.text!)
+            
+            request.sortDescriptors = [NSSortDescriptor(key: "text", ascending: true)]
+            
+            loadItems(with: request)
+        }
+    }
 }
