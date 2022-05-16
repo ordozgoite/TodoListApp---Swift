@@ -18,7 +18,7 @@ class TodoListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))        
+        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         loadItems()
         
     }
@@ -44,8 +44,8 @@ class TodoListViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-//        context.delete(todoItemsArray[indexPath.row])
-//        todoItemsArray.remove(at: indexPath.row)
+        //        context.delete(todoItemsArray[indexPath.row])
+        //        todoItemsArray.remove(at: indexPath.row)
         
         todoItemsArray[indexPath.row].isDone = !todoItemsArray[indexPath.row].isDone
         
@@ -91,7 +91,7 @@ class TodoListViewController: UITableViewController {
         } catch {
             print("Error saving context, \(error)")
         }
-
+        
         self.tableView.reloadData()
     }
     
@@ -126,14 +126,10 @@ extension TodoListViewController: UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         if searchBar.text?.count == 0 {
             loadItems()
-        } else {
-            let request: NSFetchRequest<TodoItem> = TodoItem.fetchRequest()
             
-            request.predicate = NSPredicate(format: "text CONTAINS[cd] %@", searchBar.text!)
-            
-            request.sortDescriptors = [NSSortDescriptor(key: "text", ascending: true)]
-            
-            loadItems(with: request)
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
         }
     }
 }
