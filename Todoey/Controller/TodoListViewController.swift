@@ -13,14 +13,18 @@ class TodoListViewController: UITableViewController {
     
     var todoItemsArray = [TodoItem]()
     
+    var selectedCategory: Category? {
+        didSet {
+            loadItems()
+        }
+    }
+    
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
-        loadItems()
-        
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -67,6 +71,7 @@ class TodoListViewController: UITableViewController {
                 let newTodoItem = TodoItem(context: self.context)
                 newTodoItem.text = textField.text!
                 newTodoItem.isDone = false
+                newTodoItem.parentCategory = self.selectedCategory
                 
                 self.todoItemsArray.append(newTodoItem)
                 
@@ -95,7 +100,15 @@ class TodoListViewController: UITableViewController {
         self.tableView.reloadData()
     }
     
-    func loadItems(with request: NSFetchRequest<TodoItem> = TodoItem.fetchRequest()) {
+    func loadItems(with request: NSFetchRequest<TodoItem> = TodoItem.fetchRequest(), predicate: NSPredicate? = nil) {
+        
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        
+        if let additionalPredicate = predicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
+        } else {
+            request.predicate = categoryPredicate
+        }
         
         do {
             todoItemsArray = try context.fetch(request)
@@ -120,7 +133,7 @@ extension TodoListViewController: UISearchBarDelegate {
         
         request.sortDescriptors = [NSSortDescriptor(key: "text", ascending: true)]
         
-        loadItems(with: request)
+        loadItems(with: request, predicate: request.predicate)
     }
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
